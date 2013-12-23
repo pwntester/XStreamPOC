@@ -17,13 +17,19 @@ import java.util.TreeSet;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        XStream xstream = new XStream(new DomDriver()) {{
-                processAnnotations(Contact.class);
-        }};
+        XStream xstream = new XStream(new DomDriver());
+        xstream.processAnnotations(Contact.class);
+        xstream.registerConverter(new ContactConverter());
+        xstream.registerConverter(new CatchAllConverter(), XStream.PRIORITY_VERY_LOW);
 
-        Set<Comparable> set = new TreeSet<Comparable>();
-        set.add("foo");
-        set.add(EventHandler.create(Comparable.class, new ProcessBuilder("/Applications/Calculator.app/Contents/MacOS/Calculator"), "start"));
+        Contact c = new Contact();
+        c.setName("Alvaro");
+        String sc = xstream.toXML(c);
+        System.out.println(sc);
+
+        //Set<Comparable> set = new TreeSet<Comparable>();
+        //set.add("foo");
+        //set.add(EventHandler.create(Comparable.class, new ProcessBuilder("/Applications/Calculator.app/Contents/MacOS/Calculator"), "start"));
         //String payload2 = xstream.toXML(set);
         //System.out.println(payload2);
 
@@ -42,6 +48,10 @@ public class Main {
                 "</dynamic-proxy>" +
                 "</sorted-set>";
 
-        Contact c = (Contact) xstream.fromXML(payload);
+        try {
+            Contact expl = (Contact) xstream.fromXML(payload);
+        } catch (com.thoughtworks.xstream.converters.ConversionException ex) {
+            System.out.println("Trying to deserialize null object. Make sure the input is not null and that your custom converters have higher priority than the Catch-All converter");
+        }
     }
 }
